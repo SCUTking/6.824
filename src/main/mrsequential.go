@@ -36,6 +36,7 @@ func main() {
 	// accumulate the intermediate Map output.
 	//
 	intermediate := []mr.KeyValue{}
+	//将后面的文件名参数进行遍历
 	for _, filename := range os.Args[2:] {
 		file, err := os.Open(filename)
 		if err != nil {
@@ -51,6 +52,7 @@ func main() {
 	}
 
 	//
+	//大的区别是中间建全部保存在同一个地方
 	// a big difference from real MapReduce is that all the
 	// intermediate data is in one place, intermediate[],
 	// rather than being partitioned into NxM buckets.
@@ -68,6 +70,7 @@ func main() {
 	i := 0
 	for i < len(intermediate) {
 		j := i + 1
+		//将KEY相同的放到同一个地方
 		for j < len(intermediate) && intermediate[j].Key == intermediate[i].Key {
 			j++
 		}
@@ -75,6 +78,7 @@ func main() {
 		for k := i; k < j; k++ {
 			values = append(values, intermediate[k].Value)
 		}
+		//同一个KEY交给同一个Value处理
 		output := reducef(intermediate[i].Key, values)
 
 		// this is the correct format for each line of Reduce output.
@@ -89,6 +93,7 @@ func main() {
 //
 // load the application Map and Reduce functions
 // from a plugin file, e.g. ../mrapps/wc.so
+//	从插件中导入Map函数和Reduce函数
 //
 func loadPlugin(filename string) (func(string, string) []mr.KeyValue, func(string, []string) string) {
 	p, err := plugin.Open(filename)

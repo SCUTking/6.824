@@ -17,12 +17,15 @@ import "strconv"
 // file's complete contents. You should ignore the input file name,
 // and look only at the contents argument. The return value is a slice
 // of key/value pairs.
+//..content是文件的实际内容
 //
 func Map(filename string, contents string) []mr.KeyValue {
 	// function to detect word separators.
+	//判断string里面的该字符是否是字符
 	ff := func(r rune) bool { return !unicode.IsLetter(r) }
 
 	// split contents into an array of words.
+	//拆分字符串
 	words := strings.FieldsFunc(contents, ff)
 
 	kva := []mr.KeyValue{}
