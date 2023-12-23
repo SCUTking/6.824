@@ -105,6 +105,7 @@ func make_config(t *testing.T, n int, unreliable bool, snapshot bool) *config {
 	return cfg
 }
 
+// 关闭一个节点 但是保留它的状态
 // shut down a Raft server but save its persistent state.
 func (cfg *config) crash1(i int) {
 	cfg.disconnect(i)
@@ -137,6 +138,7 @@ func (cfg *config) crash1(i int) {
 	}
 }
 
+// 判断日志的合理性
 func (cfg *config) checkLogs(i int, m ApplyMsg) (string, bool) {
 	err_msg := ""
 	v := m.Command
@@ -158,6 +160,7 @@ func (cfg *config) checkLogs(i int, m ApplyMsg) (string, bool) {
 
 // applier reads message from apply ch and checks that they match the log
 // contents
+// 读取从管道来的东西
 func (cfg *config) applier(i int, applyCh chan ApplyMsg) {
 	for m := range applyCh {
 		if m.CommandValid == false {
@@ -267,13 +270,12 @@ func (cfg *config) applierSnap(i int, applyCh chan ApplyMsg) {
 	}
 }
 
-//
 // start or re-start a Raft.
 // if one already exists, "kill" it first.
 // allocate new outgoing port file names, and a new
 // state persister, to isolate previous instance of
 // this server. since we cannot really kill it.
-//
+// 如果i已经存在就杀掉；初始化新的节点
 func (cfg *config) start1(i int, applier func(int, chan ApplyMsg)) {
 	cfg.crash1(i)
 
@@ -422,15 +424,16 @@ func (cfg *config) setlongreordering(longrel bool) {
 	cfg.net.LongReordering(longrel)
 }
 
-//
 // check that one of the connected servers thinks
 // it is the leader, and that no other connected
 // server thinks otherwise.
 //
 // try a few times in case re-elections are needed.
-//
 func (cfg *config) checkOneLeader() int {
+	cfg.t.Logf("测试")
+
 	for iters := 0; iters < 10; iters++ {
+		cfg.t.Logf("测试分隔线——————————————")
 		ms := 450 + (rand.Int63() % 100)
 		time.Sleep(time.Duration(ms) * time.Millisecond)
 
@@ -439,7 +442,11 @@ func (cfg *config) checkOneLeader() int {
 			if cfg.connected[i] {
 				if term, leader := cfg.rafts[i].GetState(); leader {
 					leaders[term] = append(leaders[term], i)
+					cfg.t.Logf("term： %d 节点为 %d  是否为leader；%v \n", term, i, leader)
+				} else {
+					cfg.t.Logf("term： %d 节点为 %d  是否为leader；%v \n", term, i, leader)
 				}
+
 			}
 		}
 
@@ -461,6 +468,16 @@ func (cfg *config) checkOneLeader() int {
 	return -1
 }
 
+//func (cfg *config) AllPeersState() {
+//	cfg.t.Logf("111111")
+//	for i := 0; i < cfg.n; i++ {
+//		if cfg.connected[i] {
+//			xterm, state := cfg.rafts[i].GetState()
+//			cfg.t.Logf("节点%v 任期为%v 状态为%v \n", i, xterm, state)
+//		}
+//	}
+//}
+
 // check that everyone agrees on the term.
 func (cfg *config) checkTerms() int {
 	term := -1
@@ -477,10 +494,8 @@ func (cfg *config) checkTerms() int {
 	return term
 }
 
-//
 // check that none of the connected servers
 // thinks it is the leader.
-//
 func (cfg *config) checkNoLeader() {
 	for i := 0; i < cfg.n; i++ {
 		if cfg.connected[i] {
