@@ -2,6 +2,7 @@ package raft
 
 import (
 	"fmt"
+	"sync"
 	"testing"
 	"time"
 )
@@ -123,4 +124,13 @@ func TestMy4(t *testing.T) {
 		fmt.Println(3)
 	}
 
+}
+
+func TestMy5(t *testing.T) {
+	//测试是否
+	var mu sync.Mutex
+	//mu.Lock()
+	lock := mu.TryLock()
+	fmt.Println(lock)
+	mu.Unlock()
 }

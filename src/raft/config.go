@@ -518,6 +518,7 @@ func (cfg *config) nCommitted(index int) (int, interface{}) {
 
 		cfg.mu.Lock()
 		cmd1, ok := cfg.logs[i][index]
+		//fmt.Printf("节点%v的日志为%v \n", i, cfg.logs[i])
 		cfg.mu.Unlock()
 
 		if ok {
@@ -585,6 +586,7 @@ func (cfg *config) one(cmd interface{}, expectedServers int, retry bool) int {
 			starts = (starts + 1) % cfg.n
 			var rf *Raft
 			cfg.mu.Lock()
+			//验证是否还在连接
 			if cfg.connected[starts] {
 				rf = cfg.rafts[starts]
 			}
@@ -598,12 +600,14 @@ func (cfg *config) one(cmd interface{}, expectedServers int, retry bool) int {
 			}
 		}
 
+		//存在leader,index是日志的索引
 		if index != -1 {
 			// somebody claimed to be the leader and to have
 			// submitted our command; wait a while for agreement.
 			t1 := time.Now()
 			for time.Since(t1).Seconds() < 2 {
 				nd, cmd1 := cfg.nCommitted(index)
+				//fmt.Printf("nd:%v,es:%v,cmd1:%v,cmd:%v \n", nd, expectedServers, cmd1, cmd)
 				if nd > 0 && nd >= expectedServers {
 					// committed
 					if cmd1 == cmd {
@@ -614,7 +618,7 @@ func (cfg *config) one(cmd interface{}, expectedServers int, retry bool) int {
 				time.Sleep(20 * time.Millisecond)
 			}
 			if retry == false {
-				cfg.t.Fatalf("one(%v) failed to reach agreement", cmd)
+				cfg.t.Fatalf("one(%v) failed to reach agreement,in index(%v)", cmd, index)
 			}
 		} else {
 			time.Sleep(50 * time.Millisecond)
